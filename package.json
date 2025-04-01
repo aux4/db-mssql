@@ -1,6 +1,6 @@
 {
   "name": "@aux4/db-mssql",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Database CLI for MSSQL",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,6 @@
   "homepage": "https://github.com/aux4/db-mssql#readme",
   "dependencies": {
     "merge": "^2.1.1",
-    "mssql": "^9.1.1"
+    "mssql": "^11.0.1"
   }
 }
