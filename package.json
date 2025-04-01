@@ -1,6 +1,6 @@
 {
   "name": "@aux4/db-mssql",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Database CLI for MSSQL",
   "main": "index.js",
   "scripts": {
