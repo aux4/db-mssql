@@ -1,0 +1,134 @@
+name: Publish Package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!README.md'
+      - '!LICENSE'
+      - '!.gitignore'
+
+  workflow_dispatch:
+    inputs:
+      level:
+        description: 'Release level (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: publish-package
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        uses: aux4/action@v1
+        with:
+          command: lint
+          strict: 'true'
+
+  test-linux:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: MyStr0ng_Pass1
+        ports:
+          - 1433:1433
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Wait for SQL Server
+        run: |
+          node -e '
+            const sql = require("mssql");
+            (async () => {
+              for (let i = 0; i < 40; i++) {
+                try {
+                  const pool = await sql.connect({ server: "localhost", port: 1433, user: "sa", password: "MyStr0ng_Pass1", options: { encrypt: false, trustServerCertificate: true } });
+                  await pool.request().query("SELECT 1");
+                  await pool.close();
+                  console.log("SQL Server is ready");
+                  process.exit(0);
+                } catch (e) {
+                  console.log("Waiting for SQL Server... " + (e.code || e.message));
+                  await new Promise(r => setTimeout(r, 3000));
+                }
+              }
+              console.error("SQL Server did not become ready in time");
+              process.exit(1);
+            })();
+          '
+
+      - name: Test
+        uses: aux4/action@v1
+        with:
+          command: test
+          build_command: npm run build
+
+  publish:
+    needs: [lint, test-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish
+        uses: aux4/action@v1
+        with:
+          command: publish
+          level: ${{ inputs.level || 'patch' }}
+          aux4_token: ${{ secrets.AUX4_ACCESS_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

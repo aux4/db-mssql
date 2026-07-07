@@ -1,0 +1,167 @@
+{
+  "scope": "aux4",
+  "name": "db-mssql",
+  "version": "1.0.0",
+  "description": "mssql database tools",
+  "tags": [
+    "db",
+    "database",
+    "mssql",
+    "sqlserver"
+  ],
+  "dependencies": [
+    "aux4/db"
+  ],
+  "profiles": [
+    {
+      "name": "db",
+      "commands": [
+        {
+          "name": "mssql",
+          "execute": [
+            "profile:db:mssql"
+          ],
+          "help": {
+            "text": "mssql database tools"
+          }
+        }
+      ]
+    },
+    {
+      "name": "db:mssql",
+      "commands": [
+        {
+          "name": "execute",
+          "execute": [
+            "stdin:aux4 db driver prepare execute params(query, file, inputStream, tx, ignore) --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt)"
+          ],
+          "help": {
+            "text": "Execute a query on the mssql database",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              },
+              {
+                "name": "query",
+                "text": "SQL query to execute",
+                "default": "",
+                "arg": true
+              },
+              {
+                "name": "file",
+                "text": "SQL file to execute",
+                "default": ""
+              },
+              {
+                "name": "inputStream",
+                "text": "Read JSON input from stdin",
+                "default": "false"
+              },
+              {
+                "name": "tx",
+                "text": "Use transaction for batch operations",
+                "default": "false"
+              },
+              {
+                "name": "ignore",
+                "text": "Ignore errors and continue processing",
+                "default": "false"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stream",
+          "execute": [
+            "stdin:aux4 db driver prepare stream params(query, file, inputStream, tx, ignore) --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt)"
+          ],
+          "help": {
+            "text": "Execute a query on the mssql database and stream results",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              },
+              {
+                "name": "query",
+                "text": "SQL query to execute",
+                "default": ""
+              },
+              {
+                "name": "file",
+                "text": "SQL file to execute",
+                "default": ""
+              },
+              {
+                "name": "inputStream",
+                "text": "Read JSON input from stdin",
+                "default": "false"
+              },
+              {
+                "name": "tx",
+                "text": "Use transaction for batch operations",
+                "default": "false"
+              },
+              {
+                "name": "ignore",
+                "text": "Ignore errors and continue processing",
+                "default": "false"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

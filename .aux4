@@ -4,39 +4,12 @@
       "name": "main",
       "commands": [
         {
-          "name": "ship",
+          "name": "build",
           "execute": [
-            "git pull -r",
-            "npm test",
-            "git push"
+            "npm run build"
           ],
           "help": {
-            "text": "🚢 pull test and push the code"
-          }
-        },
-        {
-          "name": "release",
-          "execute": [
-            "npm version ${version}",
-            "json:cat package.json",
-            "set:versionNumber=${response.version}",
-            "npm publish --access public --otp=${otp}",
-            "git push --follow-tags",
-            "echo ${versionNumber} released successfully"
-          ],
-          "help": {
-            "text": "release new version of @aux4/db-mssql",
-            "variables": [
-              {
-                "name": "version",
-                "text": "type of version release. e.g.: major, minor, patch",
-                "default": "patch"
-              },
-              {
-                "name": "otp",
-                "text": "npm one time password"
-              }
-            ]
+            "text": "Build aux4/db-mssql"
           }
         }
       ]

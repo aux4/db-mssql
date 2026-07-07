@@ -1,29 +1,28 @@
 {
-  "name": "@aux4/db-mssql",
-  "version": "1.0.3",
-  "description": "Database CLI for MSSQL",
-  "main": "index.js",
+  "name": "aux4-db-mssql",
+  "version": "1.0.0",
+  "description": "MSSQL database tools using mssql client",
+  "type": "module",
+  "main": "main.js",
+  "bin": {
+    "aux4-db-mssql": "./package/lib/aux4-db-mssql.js"
+  },
   "scripts": {
-    "test": "jest"
+    "build": "rollup -c",
+    "dev": "node main.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/aux4/db-mssql.git"
-  },
-  "keywords": [
-    "aux4",
-    "database",
-    "cli",
-    "mssql"
-  ],
-  "author": "Aux4",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/aux4/db-mssql/issues"
-  },
-  "homepage": "https://github.com/aux4/db-mssql#readme",
   "dependencies": {
-    "merge": "^2.1.1",
-    "mssql": "^11.0.1"
-  }
+    "mssql": "^12.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "rollup": "^4.46.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "",
+  "license": "Apache-2.0"
 }
