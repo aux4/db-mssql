@@ -160,6 +160,243 @@
               }
             ]
           }
+        },
+        {
+          "name": "describe",
+          "execute": [
+            "stdin:aux4 db driver prepare execute --query \"SELECT c.COLUMN_NAME AS \\\"name\\\", c.DATA_TYPE AS \\\"type\\\", CASE WHEN c.IS_NULLABLE='YES' THEN 1 ELSE 0 END AS \\\"nullable\\\", c.COLUMN_DEFAULT AS \\\"default\\\", pk.pk_flag AS \\\"key\\\", CASE WHEN COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.TABLE_SCHEMA)+'.'+QUOTENAME(c.TABLE_NAME)),c.COLUMN_NAME,'IsIdentity')=1 THEN 'identity' ELSE NULL END AS \\\"extra\\\", CAST(ep.value AS NVARCHAR(MAX)) AS \\\"comment\\\" FROM INFORMATION_SCHEMA.COLUMNS c LEFT JOIN (SELECT kcu.TABLE_SCHEMA, kcu.TABLE_NAME, kcu.COLUMN_NAME, 'PRI' AS pk_flag FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON tc.CONSTRAINT_NAME=kcu.CONSTRAINT_NAME AND tc.CONSTRAINT_SCHEMA=kcu.CONSTRAINT_SCHEMA WHERE tc.CONSTRAINT_TYPE='PRIMARY KEY') pk ON pk.TABLE_SCHEMA=c.TABLE_SCHEMA AND pk.TABLE_NAME=c.TABLE_NAME AND pk.COLUMN_NAME=c.COLUMN_NAME LEFT JOIN sys.extended_properties ep ON ep.major_id=OBJECT_ID(QUOTENAME(c.TABLE_SCHEMA)+'.'+QUOTENAME(c.TABLE_NAME)) AND ep.minor_id=COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.TABLE_SCHEMA)+'.'+QUOTENAME(c.TABLE_NAME)),c.COLUMN_NAME,'ColumnId') AND ep.class=1 AND ep.name='MS_Description' WHERE c.TABLE_SCHEMA=COALESCE(NULLIF(:schema,''),SCHEMA_NAME()) AND c.TABLE_NAME=:table ORDER BY c.ORDINAL_POSITION\" --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt) | node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=d.trim();const o=t?JSON.parse(t).map(r=>{('nullable' in r)?(r.nullable=r.nullable?true:false):0;return Object.keys(r).reduce((a,k)=>{const v=r[k];[null,''].indexOf(v)<0?a[k]=v:0;return a},{});}):'';o?console.log(JSON.stringify(o)):0;});\""
+          ],
+          "help": {
+            "text": "Describe the columns of a table",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              },
+              {
+                "name": "schema",
+                "text": "Schema to inspect (defaults to the connection's current schema)",
+                "default": ""
+              },
+              {
+                "name": "table",
+                "text": "Table name to describe"
+              }
+            ]
+          }
+        },
+        {
+          "name": "desc",
+          "execute": [
+            "aux4 db mssql describe params(host, port, database, user, password, encrypt, schema, table)"
+          ],
+          "help": {
+            "text": "Describe the columns of a table (alias of describe)",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              },
+              {
+                "name": "schema",
+                "text": "Schema to inspect (defaults to the connection's current schema)",
+                "default": ""
+              },
+              {
+                "name": "table",
+                "text": "Table name to describe"
+              }
+            ]
+          }
+        },
+        {
+          "name": "list",
+          "execute": [
+            "profile:db:mssql:list"
+          ],
+          "help": {
+            "text": "List database objects (tables, databases, schemas, ...)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "db:mssql:list",
+      "commands": [
+        {
+          "name": "tables",
+          "execute": [
+            "stdin:aux4 db driver prepare execute --query \"SELECT t.TABLE_NAME AS \\\"name\\\", t.TABLE_CATALOG AS \\\"database\\\", t.TABLE_SCHEMA AS \\\"schema\\\", CAST(ep.value AS NVARCHAR(MAX)) AS \\\"comment\\\" FROM INFORMATION_SCHEMA.TABLES t LEFT JOIN sys.extended_properties ep ON ep.major_id=OBJECT_ID(QUOTENAME(t.TABLE_SCHEMA)+'.'+QUOTENAME(t.TABLE_NAME)) AND ep.minor_id=0 AND ep.class=1 AND ep.name='MS_Description' WHERE t.TABLE_TYPE='BASE TABLE' AND t.TABLE_SCHEMA=COALESCE(NULLIF(:schema,''),SCHEMA_NAME()) ORDER BY t.TABLE_NAME\" --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt) | node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=d.trim();const o=t?JSON.parse(t).map(r=>{('nullable' in r)?(r.nullable=r.nullable?true:false):0;return Object.keys(r).reduce((a,k)=>{const v=r[k];[null,''].indexOf(v)<0?a[k]=v:0;return a},{});}):'';o?console.log(JSON.stringify(o)):0;});\""
+          ],
+          "help": {
+            "text": "List the base tables in the current schema",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              },
+              {
+                "name": "schema",
+                "text": "Schema to inspect (defaults to the connection's current schema)",
+                "default": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "databases",
+          "execute": [
+            "stdin:aux4 db driver prepare execute --query \"SELECT name AS \\\"name\\\" FROM sys.databases ORDER BY name\" --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt) | node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=d.trim();const o=t?JSON.parse(t).map(r=>{('nullable' in r)?(r.nullable=r.nullable?true:false):0;return Object.keys(r).reduce((a,k)=>{const v=r[k];[null,''].indexOf(v)<0?a[k]=v:0;return a},{});}):'';o?console.log(JSON.stringify(o)):0;});\""
+          ],
+          "help": {
+            "text": "List the databases on the server",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schemas",
+          "execute": [
+            "stdin:aux4 db driver prepare execute --query \"SELECT name AS \\\"name\\\" FROM sys.schemas ORDER BY name\" --params value(*) | node ${packageDir}/lib/aux4-db-mssql.js values(host, port, database, user, password, encrypt) | node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const t=d.trim();const o=t?JSON.parse(t).map(r=>{('nullable' in r)?(r.nullable=r.nullable?true:false):0;return Object.keys(r).reduce((a,k)=>{const v=r[k];[null,''].indexOf(v)<0?a[k]=v:0;return a},{});}):'';o?console.log(JSON.stringify(o)):0;});\""
+          ],
+          "help": {
+            "text": "List the schemas in the current database",
+            "variables": [
+              {
+                "name": "host",
+                "text": "Database host",
+                "default": "localhost"
+              },
+              {
+                "name": "port",
+                "text": "Database port",
+                "default": "1433"
+              },
+              {
+                "name": "database",
+                "text": "Database name",
+                "default": "master"
+              },
+              {
+                "name": "user",
+                "text": "Database user",
+                "default": "sa"
+              },
+              {
+                "name": "password",
+                "text": "Database password"
+              },
+              {
+                "name": "encrypt",
+                "text": "Encrypt the connection (use for Azure SQL)",
+                "default": "false"
+              }
+            ]
+          }
         }
       ]
     }

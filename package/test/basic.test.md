@@ -250,3 +250,283 @@ aux4 db mssql execute --host localhost --port 1433 --database test --user sa --p
 ```error
 [{"item":{},"query":"SELECT * FROM nonexistent_table","error":"Invalid object name 'nonexistent_table'."}]
 ```
+
+# Schema Introspection
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database master --query "IF DB_ID('introspect_test') IS NULL CREATE DATABASE introspect_test"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "DROP TABLE IF EXISTS product"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "DROP TABLE IF EXISTS tag"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "CREATE TABLE product (id INT IDENTITY(1,1) NOT NULL PRIMARY KEY, name NVARCHAR(100) NOT NULL, price DECIMAL(10,2) NULL DEFAULT '0.00', sku NVARCHAR(50) NULL)"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "CREATE TABLE tag (id INT NOT NULL PRIMARY KEY)"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "EXEC sp_addextendedproperty @name=N'MS_Description', @value=N'Unique product identifier', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'product', @level2type=N'COLUMN', @level2name=N'id'"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "EXEC sp_addextendedproperty @name=N'MS_Description', @value=N'Product display name', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'product', @level2type=N'COLUMN', @level2name=N'name'"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "EXEC sp_addextendedproperty @name=N'MS_Description', @value=N'Unit price in USD', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'product', @level2type=N'COLUMN', @level2name=N'price'"
+```
+
+```beforeAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database introspect_test --query "EXEC sp_addextendedproperty @name=N'MS_Description', @value=N'Catalog of products for sale', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'product'"
+```
+
+```afterAll
+aux4 db mssql execute --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 --database master --query "IF DB_ID('introspect_test') IS NOT NULL BEGIN ALTER DATABASE introspect_test SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE introspect_test; END"
+```
+
+## Describe a table
+
+### should return canonical column metadata, dropping null and empty fields
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product
+```
+
+```expect:json
+[
+  {
+    "name": "id",
+    "type": "int",
+    "nullable": false,
+    "key": "PRI",
+    "extra": "identity",
+    "comment": "Unique product identifier"
+  },
+  {
+    "name": "name",
+    "type": "nvarchar",
+    "nullable": false,
+    "comment": "Product display name"
+  },
+  {
+    "name": "price",
+    "type": "decimal",
+    "nullable": true,
+    "default": "('0.00')",
+    "comment": "Unit price in USD"
+  },
+  {
+    "name": "sku",
+    "type": "nvarchar",
+    "nullable": true
+  }
+]
+```
+
+### should keep only present keys per row (null/empty dropped, in definition order)
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product | jq -c 'map(keys_unsorted)'
+```
+
+```expect
+[["name","type","nullable","key","extra","comment"],["name","type","nullable","comment"],["name","type","nullable","default","comment"],["name","type","nullable"]]
+```
+
+### should reduce a plain column to just name, type, nullable
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product | jq -c '.[3]'
+```
+
+```expect
+{"name":"sku","type":"nvarchar","nullable":true}
+```
+
+### should never emit a null or empty-string value
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product | jq -c '[.[] | to_entries[] | .value] | map(select(. == null or . == "")) | length'
+```
+
+```expect
+0
+```
+
+### should emit nullable as a real JSON boolean (not "YES"/"NO", not 1/0)
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product | jq -c 'map(.nullable | type)'
+```
+
+```expect
+["boolean","boolean","boolean","boolean"]
+```
+
+## Describe a table with an explicit schema
+
+### should accept the --schema flag and return the same columns
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --schema dbo --table product | jq -c 'map(.name)'
+```
+
+```expect
+["id","name","price","sku"]
+```
+
+### should return no rows for a non-existent schema (proves :schema binds)
+
+```execute
+aux4 db mssql describe --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --schema nope --table product
+```
+
+```expect
+[]
+```
+
+## Describe a table with the desc alias
+
+### should behave the same as describe
+
+```execute
+aux4 db mssql desc --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product
+```
+
+```expect:json
+[
+  {
+    "name": "id",
+    "type": "int",
+    "nullable": false,
+    "key": "PRI",
+    "extra": "identity",
+    "comment": "Unique product identifier"
+  },
+  {
+    "name": "name",
+    "type": "nvarchar",
+    "nullable": false,
+    "comment": "Product display name"
+  },
+  {
+    "name": "price",
+    "type": "decimal",
+    "nullable": true,
+    "default": "('0.00')",
+    "comment": "Unit price in USD"
+  },
+  {
+    "name": "sku",
+    "type": "nvarchar",
+    "nullable": true
+  }
+]
+```
+
+## List tables
+
+### should list base tables qualified by database and schema, with comments when present
+
+```execute
+aux4 db mssql list tables --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1
+```
+
+```expect:json
+[
+  {
+    "name": "product",
+    "database": "introspect_test",
+    "schema": "dbo",
+    "comment": "Catalog of products for sale"
+  },
+  {
+    "name": "tag",
+    "database": "introspect_test",
+    "schema": "dbo"
+  }
+]
+```
+
+### should keep only present keys per row (empty comment dropped)
+
+```execute
+aux4 db mssql list tables --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 | jq -c 'map(keys_unsorted)'
+```
+
+```expect
+[["name","database","schema","comment"],["name","database","schema"]]
+```
+
+### should never emit a null or empty-string value
+
+```execute
+aux4 db mssql list tables --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 | jq -c '[.[] | to_entries[] | .value] | map(select(. == null or . == "")) | length'
+```
+
+```expect
+0
+```
+
+### should filter by an explicit --schema
+
+```execute
+aux4 db mssql list tables --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --schema dbo | jq -c 'map(.name)'
+```
+
+```expect
+["product","tag"]
+```
+
+## List databases
+
+### should include a user database in the server listing
+
+```execute
+aux4 db mssql list databases --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 | jq -c 'map(.name) | index("introspect_test") != null'
+```
+
+```expect
+true
+```
+
+### should return one canonical {name} object per database
+
+```execute
+aux4 db mssql list databases --host localhost --port 1433 --user sa --password MyStr0ng_Pass1 | jq -c '[.[] | keys] | unique'
+```
+
+```expect
+[["name"]]
+```
+
+## List schemas
+
+### should include the dbo schema in the current database
+
+```execute
+aux4 db mssql list schemas --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 | jq -c 'map(.name) | index("dbo") != null'
+```
+
+```expect
+true
+```
+
+### should return one canonical {name} object per schema
+
+```execute
+aux4 db mssql list schemas --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 | jq -c '[.[] | keys] | unique'
+```
+
+```expect
+[["name"]]
+```
