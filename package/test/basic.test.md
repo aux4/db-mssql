@@ -394,45 +394,6 @@ aux4 db mssql describe --host localhost --port 1433 --database introspect_test -
 []
 ```
 
-## Describe a table with the desc alias
-
-### should behave the same as describe
-
-```execute
-aux4 db mssql desc --host localhost --port 1433 --database introspect_test --user sa --password MyStr0ng_Pass1 --table product
-```
-
-```expect:json
-[
-  {
-    "name": "id",
-    "type": "int",
-    "nullable": false,
-    "key": "PRI",
-    "extra": "identity",
-    "comment": "Unique product identifier"
-  },
-  {
-    "name": "name",
-    "type": "nvarchar",
-    "nullable": false,
-    "comment": "Product display name"
-  },
-  {
-    "name": "price",
-    "type": "decimal",
-    "nullable": true,
-    "default": "('0.00')",
-    "comment": "Unit price in USD"
-  },
-  {
-    "name": "sku",
-    "type": "nvarchar",
-    "nullable": true
-  }
-]
-```
-
 ## List tables
 
 ### should list base tables qualified by database and schema, with comments when present

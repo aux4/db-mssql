@@ -211,55 +211,6 @@
           }
         },
         {
-          "name": "desc",
-          "execute": [
-            "aux4 db mssql describe params(host, port, database, user, password, encrypt, schema, table)"
-          ],
-          "help": {
-            "text": "Describe the columns of a table (alias of describe)",
-            "variables": [
-              {
-                "name": "host",
-                "text": "Database host",
-                "default": "localhost"
-              },
-              {
-                "name": "port",
-                "text": "Database port",
-                "default": "1433"
-              },
-              {
-                "name": "database",
-                "text": "Database name",
-                "default": "master"
-              },
-              {
-                "name": "user",
-                "text": "Database user",
-                "default": "sa"
-              },
-              {
-                "name": "password",
-                "text": "Database password"
-              },
-              {
-                "name": "encrypt",
-                "text": "Encrypt the connection (use for Azure SQL)",
-                "default": "false"
-              },
-              {
-                "name": "schema",
-                "text": "Schema to inspect (defaults to the connection's current schema)",
-                "default": ""
-              },
-              {
-                "name": "table",
-                "text": "Table name to describe"
-              }
-            ]
-          }
-        },
-        {
           "name": "list",
           "execute": [
             "profile:db:mssql:list"

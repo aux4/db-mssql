@@ -118,16 +118,6 @@ aux4 db mssql describe \
 
 Only keys that carry a value are returned — `null` and empty (`""`) fields are omitted, so a plain column is just `{"name", "type", "nullable"}`. `nullable` is always present. `default` is returned exactly as SQL Server stores the constraint definition (parenthesized, e.g. `('0.00')`).
 
-### aux4 db mssql desc
-
-Alias of `describe` — accepts the exact same flags and produces the exact same output.
-
-```bash
-aux4 db mssql desc \
-  --host localhost --port 1433 --database mydb --user sa --password "******" \
-  --table product
-```
-
 ### aux4 db mssql list tables
 
 List the base tables visible in the target schema. Each row carries the table `name`, the `database` and `schema` it lives in (so an agent can fully qualify it), and the table `comment` when one is set.
